@@ -101,7 +101,7 @@ const dropdownOptions = [
     label: 'Sign out',
     iconSrc: '/dashboard/sidebar/sign-out.svg',
     iconAlt: 'Sign out',
-    href: '/logout',
+    action: 'logout',
   },
 ];
 
