@@ -5,6 +5,7 @@ import { authApi } from '@/features/auth/authApi';
 import authReducer from '@/features/auth/authSlice';
 import { calllogsApi } from '@/features/callog/calllogApi';
 import { companyApi } from '@/features/company/companyApi';
+import { onboardingApi } from '@/features/onboarding/onboardingApi';
 import { publicApiSlice } from '@/features/public/publicApiSlice';
 import { subscriptionApi } from '@/features/subscription/subscriptionApi';
 import { testApi } from '@/features/test/testApiSlice';
@@ -18,6 +19,7 @@ export const rootReducer = combineReducers({
   [companyApi.reducerPath]: companyApi.reducer,
   [publicApiSlice.reducerPath]: publicApiSlice.reducer,
   [testApi.reducerPath]: testApi.reducer,
+  [onboardingApi.reducerPath]: onboardingApi.reducer,
   [transcriptApi.reducerPath]: transcriptApi.reducer,
   [transcriptChunksApi.reducerPath]: transcriptChunksApi.reducer,
   [subscriptionApi.reducerPath]: subscriptionApi.reducer,
