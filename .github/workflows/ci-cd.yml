@@ -25,7 +25,7 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write   # OIDC to AWS
+  id-token: write  # OIDC to AWS
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -36,7 +36,7 @@ env:
 jobs:
   ci_frontend:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode == 'ci' || inputs.mode == 'cicd' }}
+    if: ${{ github.event_name == 'pull_request' || inputs.mode == 'ci' || inputs.mode == 'cicd' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,10 +62,12 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # 如果你的 Dockerfile.uat 会 COPY .next 进镜像，需要先构建
       - name: Build (only if you COPY .next into image)
         run: NEXT_PUBLIC_API_BASE_URL="${{ secrets.UAT_BACKEND_URL }}" pnpm build
 
-      - name: Upload Next.js artifact (可选，用于多阶段 Dockerfile COPY)
+      # 可选：把 .next 产物作为工件，供后续构建步骤 COPY
+      - name: Upload Next.js artifact
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'cicd') }}
         uses: actions/upload-artifact@v4
         with:
@@ -87,7 +89,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download build artifact (若 Dockerfile 需要 COPY .next)
+      # 如果 Dockerfile.uat 要 COPY .next，则需要下载 artefact
+      - name: Download build artifact (when Dockerfile needs COPY .next)
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
@@ -105,7 +108,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push (two tags: uat-latest + sha-*)
+      - name: "Build & push (two tags: uat-latest + sha-*)"
         uses: docker/build-push-action@v6
         with:
           push: true
@@ -127,8 +130,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
         run: |
-          owner="${{ secrets.PLATFORM_REPO_OWNER }}"   # e.g. depengsun
-          repo="${{ secrets.PLATFORM_REPO_NAME }}"     # e.g. dispatchai-platform
+          owner="${{ secrets.PLATFORM_REPO_OWNER }}"
+          repo="${{ secrets.PLATFORM_REPO_NAME }}"
           curl -s -X POST \
             -H "Authorization: token ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
