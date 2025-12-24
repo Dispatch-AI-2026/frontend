@@ -5,6 +5,7 @@ import axios from 'axios';
 
 import { logout, updateCSRFToken } from '@/features/auth/authSlice';
 import type { RootState } from '@/redux/store';
+import { getApiBaseUrl } from '@/utils/api-config';
 
 interface ErrorResponse {
   message: string;
@@ -25,6 +26,8 @@ export const axiosBaseQuery = (): BaseQueryFn<
     { url, method = 'GET', data, params, headers },
     { dispatch, getState },
   ) => {
+    const apiBaseUrl = getApiBaseUrl();
+
     try {
       let { csrfToken } = (getState() as RootState).auth;
       const { isAuthenticated } = (getState() as RootState).auth;
@@ -34,12 +37,12 @@ export const axiosBaseQuery = (): BaseQueryFn<
         isAuthenticated &&
         !csrfToken &&
         ['POST', 'PUT', 'DELETE', 'PATCH'].includes(
-          method?.toUpperCase() || 'GET',
+          method?.toUpperCase() ?? 'GET',
         )
       ) {
         try {
           const csrfResponse = await axios({
-            baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+            baseURL: apiBaseUrl,
             url: '/auth/csrf-token',
             method: 'GET',
             withCredentials: true,
@@ -56,7 +59,7 @@ export const axiosBaseQuery = (): BaseQueryFn<
       }
 
       const result = await axios({
-        baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+        baseURL: apiBaseUrl,
         url,
         method,
         data,
@@ -90,7 +93,7 @@ export const axiosBaseQuery = (): BaseQueryFn<
           const { csrfToken: currentToken } = (getState() as RootState).auth;
 
           const refreshResponse = await axios({
-            baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+            baseURL: apiBaseUrl,
             url: '/auth/refresh-csrf',
             method: 'POST',
             headers: {
@@ -110,7 +113,7 @@ export const axiosBaseQuery = (): BaseQueryFn<
 
             // Retry the original request with new CSRF token
             const retryResult = await axios({
-              baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+              baseURL: apiBaseUrl,
               url,
               method,
               data,
