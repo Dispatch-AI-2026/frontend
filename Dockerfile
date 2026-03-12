@@ -1,27 +1,27 @@
 FROM node:20-alpine AS builder
-
 WORKDIR /app
+
+# Install pnpm
 RUN corepack enable
 
+# Copy and Install dependencies
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+# Copy source and build the application
 COPY . .
 RUN pnpm build
 
+# --- runtime ---
 FROM node:20-alpine
 
+RUN addgroup -S appgroup && adduser -S -G appgroup -u 1001 appuser
 WORKDIR /app
-RUN corepack enable
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
-
-COPY --from=builder /app/.next/ .next/
-COPY --from=builder /app/public/ public/
-COPY --from=builder /app/next.config.* ./
+COPY --from=builder --chown=appuser:appgroup /app/.next/standalone ./
+COPY --from=builder --chown=appuser:appgroup /app/.next/static .next/static
+COPY --from=builder --chown=appuser:appgroup /app/public public
 
 EXPOSE 3000
-
-CMD ["pnpm", "start"]
+USER appuser
+CMD ["node", "server.js"]
