@@ -15,6 +15,9 @@ RUN pnpm build
 # --- runtime ---
 FROM node:20-alpine
 
+# Install curl during the image build process
+RUN apk update && apk add curl
+
 RUN addgroup -S appgroup && adduser -S -G appgroup -u 1001 appuser
 WORKDIR /app
 
